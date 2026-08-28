@@ -16,14 +16,14 @@ costs tokens and misses things. This catches it with a list lookup.
 ## Install
 
 ```
-/plugin marketplace add mikeisgreen/speak-american
+/plugin marketplace add mikedamage/speak-american-plugin
 /plugin install speak-american
 ```
 
 Or point the marketplace at a local clone:
 
 ```
-/plugin marketplace add /path/to/speak-american
+/plugin marketplace add /path/to/speak-american-plugin
 ```
 
 ## Requirements
