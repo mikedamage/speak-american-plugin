@@ -1,11 +1,15 @@
 # speak-american
 
-A Claude Code plugin that converts British/Commonwealth English spellings to
+Lately I've noticed Claude's prose composition lapsing into UK/Commonwealth spelling conventions. I got tired of reminding it that this is the land of the free and to drop all the extraneous u's, that it's "center" not "cent-reeeee," and to use z's because that's literally the sound at the end of "analyze." It's costing me too much in tokens, Busch Lights, and Marlboro Reds.
+
+---
+
+This Claude Code plugin converts British/Commonwealth English spellings to
 American English in Markdown, prose, and code comments — deterministically, from
 a static word-pair list.
 
-It exists because Claude Code sessions drift into Commonwealth spelling at
-random: a doc comes back with `centre` for `center`, `colour` for `color`,
+It exists because Claude Code sessions randomly decide that they want to seem more
+smart and sophisticated sometimes: a doc comes back with `centre` for `center`, `colour` for `color`,
 `capitalisation` for `capitalization`. Catching that by re-reading the document
 costs tokens and misses things. This catches it with a list lookup.
 
