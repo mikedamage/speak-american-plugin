@@ -84,6 +84,17 @@ skipped; it does not abort the run or leave a half-written tree.
 - `skills/speak-american/data/words-ignore.list` — words to never translate, one
   per line. Use it for proper nouns (`Labour Party`, `Ministry of Defence`) and
   third-party API fields that legitimately use British spelling.
+- `skills/speak-american/data/words-vocabulary.tsv` — vocabulary and register
+  swaps (`petrol` → `gasoline`), **not loaded by default**. This tool fixes
+  spelling; changing the words an author chose is a different job. Append these
+  to `words-extra.tsv` if you want them, but read them first — several are
+  context-dependent.
+
+The upstream list was audited before use: two rows had their columns swapped,
+five had a misspelled or wrongly-inflected replacement, and twenty would have
+rewritten already-correct American English (`buses` → `busses`, `lit` →
+`lighted`, `vice` → `vise`). See `data/PROVENANCE.md` for the full record.
+`tests/test_speak_american.py` fails the suite if any of them return.
 
 Both are plain text with `#` comments and no rebuild step. Leave
 `data/words.tsv` alone so it can be re-imported from upstream.

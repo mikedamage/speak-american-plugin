@@ -47,7 +47,7 @@ anaesthetise	anesthetize
 anaesthetised	anesthetized
 anaesthetises	anesthetizes
 anaesthetising	anesthetizing
-anaesthetist	anesthesiologist
+anaesthetist	anesthetist
 anaesthetists	anesthetists
 anaesthetize	anesthetize
 anaesthetized	anesthetized
@@ -69,11 +69,6 @@ antagonise	antagonize
 antagonised	antagonized
 antagonises	antagonizes
 antagonising	antagonizing
-antennae	antennas
-anti-aliased	antialiased
-anti-aliasing	antialiasing
-anti-clockwise	counter-clockwise
-any more	anymore
 apologise	apologize
 apologised	apologized
 apologises	apologizes
@@ -142,7 +137,6 @@ belabours	belabors
 bevelled	beveled
 bevvies	bevies
 bevvy	bevy
-bingeing	binging
 bougainvillaea	bougainvillea
 bougainvillaeas	bougainvilleas
 bowdlerise	bowdlerize
@@ -159,8 +153,6 @@ brutalise	brutalize
 brutalised	brutalized
 brutalises	brutalizes
 brutalising	brutalizing
-buses	busses
-busing	bussing
 caesarean	cesarean
 caesareans	cesareans
 calibre	caliber
@@ -172,7 +164,6 @@ canalise	canalize
 canalised	canalized
 canalises	canalizes
 canalising	canalizing
-cancellation	cancelation
 cancellations	cancelations
 cancelled	canceled
 cancelling	canceling
@@ -190,7 +181,6 @@ capitalise	capitalize
 capitalised	capitalized
 capitalises	capitalizes
 capitalising	capitalizing
-car park	parking lot
 caramelise	caramelize
 caramelised	caramelized
 caramelises	caramelizes
@@ -201,10 +191,7 @@ carbonises	carbonizes
 carbonising	carbonizing
 carolled	caroled
 carolling	caroling
-case-insensitive	case insensitive
-case-sensitive	case sensitive
 catalogue	catalog
-catalogue.	catalog.
 catalogued	cataloged
 catalogues	catalogs
 cataloguing	cataloging
@@ -248,7 +235,6 @@ characterise	characterize
 characterised	characterized
 characterises	characterizes
 characterising	characterizing
-charivari	shivaree
 chequebook	checkbook
 chequebooks	checkbooks
 chequer	checker
@@ -275,8 +261,6 @@ clamours	clamors
 clangour	clangor
 clarinettist	clarinetist
 clarinettists	clarinetists
-co-operate	cooperate
-co-ordinate	coordinate
 collectivise	collectivize
 collectivised	collectivized
 collectivises	collectivizes
@@ -289,8 +273,6 @@ colonisers	colonizers
 colonises	colonizes
 colonising	colonizing
 colour	color
-colour-key	colorkey
-colour-space	colorspace
 colourant	colorant
 colourants	colorants
 coloured	colored
@@ -358,7 +340,6 @@ crystallises	crystallizes
 crystallising	crystallizing
 cudgelled	cudgeled
 cudgelling	cudgeling
-curricula	curriculums
 customisable	customizable
 customisation	customization
 customise	customize
@@ -367,7 +348,6 @@ customises	customizes
 customising	customizing
 cypher	cipher
 cyphers	ciphers
-dealt	dealed
 decentralisation	decentralization
 decentralise	decentralize
 decentralised	decentralized
@@ -450,17 +430,10 @@ digitised	digitized
 digitiser	digitizer
 digitises	digitizes
 digitising	digitizing
-disc	disk
-disc,	disk,
-disc-	disk-
-disc.	disk.
-disc;	disk;
 discolour	discolor
 discoloured	discolored
 discolouring	discoloring
 discolours	discolors
-discs	disks
-discy	disky
 disembowelled	disemboweled
 disembowelling	disemboweling
 disfavour	disfavor
@@ -475,7 +448,6 @@ disorganisation	disorganization
 disorganised	disorganized
 distil	distill
 distils	distills
-doughnut	donut
 dramatisation	dramatization
 dramatisations	dramatizations
 dramatise	dramatize
@@ -625,7 +597,6 @@ fillet	filet
 filleted	fileted
 filleting	fileting
 fillets	filets
-film	movie
 finalisation	finalization
 finalise	finalize
 finalised	finalized
@@ -640,7 +611,6 @@ flavourings	flavorings
 flavourless	flavorless
 flavours	flavors
 flavoursome	flavorsome
-flyer/flier	flier/flyer
 foetal	fetal
 foetid	fetid
 foetus	fetus
@@ -651,7 +621,6 @@ formalised	formalized
 formalises	formalizes
 formalising	formalizing
 formulae	formulas
-forthcoming	upcoming
 fossilisation	fossilization
 fossilise	fossilize
 fossilised	fossilized
@@ -686,7 +655,6 @@ gaoler	jailer
 gaolers	jailers
 gaoling	jailing
 gaols	jails
-gases	gasses
 generalisation	generalization
 generalisations	generalizations
 generalise	generalize
@@ -709,7 +677,6 @@ globalise	globalize
 globalised	globalized
 globalises	globalizes
 globalising	globalizing
-globally	globaly
 glueing	gluing
 glycerine	glycerin
 goitre	goiter
@@ -896,14 +863,13 @@ jeopardising	jeopardizing
 jewelled	jeweled
 jeweller	jeweler
 jewellers	jewelers
-jewellery	jewelery
+jewellery	jewelry
 journalling	journaling
 judgement	judgment
 kilogramme	kilogram
 kilogrammes	kilograms
 kilometre	kilometer
 kilometres	kilometers
-knelt	kneeled
 labelled	labeled
 labeller	labeler
 labelling	labeling
@@ -914,7 +880,6 @@ labourers	laborers
 labouring	laboring
 labours	labors
 lacklustre	lackluster
-ladybird	ladybug
 learnt	learned
 legalisation	legalization
 legalise	legalize
@@ -925,8 +890,6 @@ legitimise	legitimize
 legitimised	legitimized
 legitimises	legitimizes
 legitimising	legitimizing
-lept	leaped
-letterbox	mailbox
 leukaemia	leukemia
 levelled	leveled
 leveller	leveler
@@ -956,7 +919,6 @@ liquidiser	liquidizer
 liquidisers	liquidizers
 liquidises	liquidizes
 liquidising	liquidizing
-lit	lighted
 litre	liter
 litres	liters
 localisation	localization
@@ -1043,7 +1005,6 @@ miniaturise	miniaturize
 miniaturised	miniaturized
 miniaturises	miniaturizes
 miniaturising	miniaturizing
-minibuses	minibusses
 minimise	minimize
 minimised	minimized
 minimises	minimizes
@@ -1131,13 +1092,11 @@ neutralise	neutralize
 neutralised	neutralized
 neutralises	neutralizes
 neutralising	neutralizing
-newsagent	newsdealer
 normalisation	normalization
 normalise	normalize
 normalised	normalized
 normalises	normalizes
 normalising	normalizing
-number plate	license plate
 odour	odor
 odourless	odorless
 odours	odors
@@ -1155,7 +1114,6 @@ optimise	optimize
 optimised	optimized
 optimises	optimizes
 optimising	optimizing
-orch	flashlight
 organisation	organization
 organisational	organizational
 organisations	organizations
@@ -1228,7 +1186,6 @@ patronised	patronized
 patronises	patronizes
 patronising	patronizing
 patronisingly	patronizingly
-pavement	sidewalk
 pedalled	pedaled
 pedalling	pedaling
 pedestrianisation	pedestrianization
@@ -1247,15 +1204,12 @@ personalise	personalize
 personalised	personalized
 personalises	personalizes
 personalising	personalizing
-petrol	gasoline
 pharmacopoeia	pharmacopeia
 pharmacopoeias	pharmacopeias
-pharmacy	drugstore
 philosophise	philosophize
 philosophised	philosophized
 philosophises	philosophizes
 philosophising	philosophizing
-philtre	filter
 philtres	filters
 phoney	phony
 picometre	picometer
@@ -1286,7 +1240,6 @@ popularise	popularize
 popularised	popularized
 popularises	popularizes
 popularising	popularizing
-postman	mailman
 pouffe	pouf
 pouffes	poufs
 practise	practice
@@ -1347,20 +1300,17 @@ pulverise	pulverize
 pulverised	pulverized
 pulverises	pulverizes
 pulverising	pulverizing
-pummelled	pummel
-pummelling	pummeled
+pummelled	pummeled
+pummelling	pummeling
 pyjama	pajama
 pyjamas	pajamas
 pzazz	pizzazz
 quarrelled	quarreled
 quarrelling	quarreling
-quarter	fourth
-quin	quint
 radicalise	radicalize
 radicalised	radicalized
 radicalises	radicalizes
 radicalising	radicalizing
-railway	railroad
 rancour	rancor
 randomisation	randomization
 randomise	randomize
@@ -1440,15 +1390,12 @@ romanticise	romanticize
 romanticised	romanticized
 romanticises	romanticizes
 romanticising	romanticizing
-rubbish	garbage
 rumour	rumor
 rumoured	rumored
 rumours	rumors
 sabre	saber
 sabres	sabers
-sailing boat	sailboat
 saltpetre	saltpeter
-sanatorium	sanitarium
 sanitise	sanitize
 sanitised	sanitized
 sanitises	sanitizes
@@ -1522,10 +1469,8 @@ signalises	signalizes
 signalising	signalizing
 signalled	signaled
 signalling	signaling
-simultaneous	simultanous
 skilful	skillful
 skilfully	skillfully
-sleigh	sled
 smoulder	smolder
 smouldered	smoldered
 smouldering	smoldering
@@ -1535,7 +1480,7 @@ snivelling	sniveling
 snorkelled	snorkeled
 snorkelling	snorkeling
 snowplough	snowplow
-snowploughs	snowplow
+snowploughs	snowplows
 socialisation	socialization
 socialise	socialize
 socialised	socialized
@@ -1621,7 +1566,6 @@ summarise	summarize
 summarised	summarized
 summarises	summarizes
 summarising	summarizing
-surname	last name
 swivelled	swiveled
 swivelling	swiveling
 symbolisation	symbolization
@@ -1663,7 +1607,6 @@ tantalises	tantalizes
 tantalising	tantalizing
 tantalisingly	tantalizingly
 tasselled	tasseled
-tea towel	dishtowel
 technicolour	technicolor
 templatisation	templatization
 templatisational	templatizational
@@ -1691,16 +1634,13 @@ theorised	theorized
 theorises	theorizes
 theorising	theorizing
 tickbox	checkbox
-tights	pantyhose
 titbit	tidbit
-toffee	taffy
 totalled	totaled
 totaller	totaler
 totalling	totaling
 towelled	toweled
 towelling	toweling
 toxaemia	toxemia
-tram	streetcar
 tranquillise	tranquilize
 tranquillised	tranquilized
 tranquilliser	tranquilizer
@@ -1714,9 +1654,7 @@ tranquillizer	tranquilizer
 tranquillizers	tranquilizers
 tranquillizes	tranquilizes
 tranquillizing	tranquilizing
-tranquilly	tranquility
 transistorised	transistorized
-transport	transportation
 traumatise	traumatize
 traumatised	traumatized
 traumatises	traumatizes
@@ -1752,7 +1690,6 @@ underutilised	underutilized
 unequalled	unequaled
 unfavourable	unfavorable
 unfavourably	unfavorably
-unfeasible	infeasible
 uninitialisation	uninitialization
 uninitialisational	uninitializational
 uninitialise	uninitialize
@@ -1771,13 +1708,12 @@ unrecognised	unrecognized
 unrivalled	unrivaled
 unsavoury	unsavory
 untrammelled	untrammeled
-upmarket	upscale
 urbanisation	urbanization
 urbanise	urbanize
 urbanised	urbanized
 urbanises	urbanizes
 urbanising	urbanizing
-usable	useable
+useable	usable
 utilisable	utilizable
 utilisation	utilization
 utilise	utilize
@@ -1796,24 +1732,21 @@ vaporises	vaporizes
 vaporising	vaporizing
 vapour	vapor
 vapours	vapors
+vectorisation	vectorization
 vectorisational	vectorizational
 vectorise	vectorize
 vectorised	vectorized
 vectoriser	vectorizer
 vectorising	vectorizing
-vectorization	vectorisation
 verbalise	verbalize
 verbalised	verbalized
 verbalises	verbalizes
 verbalising	verbalizing
-vice	vise
 victimisation	victimization
 victimise	victimize
 victimised	victimized
 victimises	victimizes
 victimising	victimizing
-videodisc	videodisk
-videodiscs	videodisks
 vigour	vigor
 virtualisation	virtualization
 virtualise	virtualize
@@ -1850,7 +1783,6 @@ westernises	westernizes
 westernising	westernizing
 wilful	willful
 wilfully	willfully
-windscreen	windshield
 womanise	womanize
 womanised	womanized
 womaniser	womanizer

@@ -1,0 +1,38 @@
+# Vocabulary and register differences, NOT spelling differences.
+#
+# This file is NOT loaded. The tool fixes spelling; swapping 'petrol'
+# for 'gasoline' changes the words an author chose, which is a different
+# job and a much easier way to damage a document.
+#
+# To opt in, append the lines below to words-extra.tsv. Review them first:
+# several are context-dependent ('disc' is correct American English in
+# 'compact disc' and 'disc brake').
+#
+charivari	shivaree
+disc	disk
+discs	disks
+doughnut	donut
+film	movie
+forthcoming	upcoming
+ladybird	ladybug
+letterbox	mailbox
+newsagent	newsdealer
+orch	flashlight
+pavement	sidewalk
+petrol	gasoline
+pharmacy	drugstore
+postman	mailman
+quarter	fourth
+quin	quint
+railway	railroad
+rubbish	garbage
+sleigh	sled
+surname	last name
+tights	pantyhose
+toffee	taffy
+tram	streetcar
+transport	transportation
+upmarket	upscale
+videodisc	videodisk
+videodiscs	videodisks
+windscreen	windshield

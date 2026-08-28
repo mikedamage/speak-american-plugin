@@ -244,6 +244,123 @@ class TestVocabulary(unittest.TestCase):
         self.assertEqual(vocab.get("center"), "centre")
 
 
+class TestWordListIntegrity(unittest.TestCase):
+    """Guards on the data file itself, where the columns can silently swap."""
+
+    DATA = ROOT / "skills" / "speak-american" / "data"
+
+    # UK -> US morphological transforms, used to detect a row whose columns
+    # are backwards.
+    RULES = [
+        (r"ise$", "ize"), (r"ised$", "ized"), (r"ises$", "izes"),
+        (r"ising$", "izing"), (r"isation$", "ization"), (r"iser$", "izer"),
+        (r"isable$", "izable"), (r"yse$", "yze"), (r"ysed$", "yzed"),
+        (r"our$", "or"), (r"ours$", "ors"), (r"oured$", "ored"),
+        (r"tre$", "ter"), (r"tres$", "ters"), (r"bre$", "ber"),
+        (r"ogue$", "og"), (r"ogues$", "ogs"), (r"ence$", "ense"),
+        (r"^ae", "e"), (r"^oe", "e"), (r"eable$", "able"), (r"mme$", "m"),
+        (r"lling$", "ling"), (r"lled$", "led"), (r"l$", "ll"),
+    ]
+
+    def rows(self):
+        import csv
+        out = []
+        for name in ("words.tsv", "words-extra.tsv"):
+            path = self.DATA / name
+            with path.open(encoding="utf8") as handle:
+                for number, line in enumerate(handle, 1):
+                    line = line.rstrip("\n")
+                    if not line.strip() or line.lstrip().startswith("#"):
+                        continue
+                    self.assertIn("\t", line, f"{name}:{number} has no tab")
+                    a, b = (x.strip() for x in line.split("\t", 1))
+                    out.append((name, number, a, b))
+        return out
+
+    def test_no_reversed_columns(self):
+        """No row may have the American spelling in column 1."""
+        import re
+        reversed_rows = []
+        for name, number, uk, us in self.rows():
+            forward = any(
+                re.search(p, uk) and re.sub(p, r, uk, count=1) == us
+                for p, r in self.RULES
+            )
+            backward = any(
+                re.search(p, us) and re.sub(p, r, us, count=1) == uk
+                for p, r in self.RULES
+            )
+            if backward and not forward:
+                reversed_rows.append(f"{name}:{number} {uk} -> {us}")
+        self.assertEqual(reversed_rows, [], "columns are swapped")
+
+    def test_sources_are_plain_lowercase_words(self):
+        """A source with punctuation or spaces can never match [A-Za-z]+."""
+        for name, number, uk, _ in self.rows():
+            self.assertTrue(uk.isalpha(), f"{name}:{number} source {uk!r} is not alphabetic")
+            self.assertEqual(uk, uk.lower(), f"{name}:{number} source {uk!r} is not lowercase")
+
+    def test_targets_are_alphabetic(self):
+        for name, number, _, us in self.rows():
+            self.assertTrue(us.isalpha(), f"{name}:{number} target {us!r} is not alphabetic")
+
+    def test_no_redundant_duplicate_sources(self):
+        """words-extra.tsv may override words.tsv, but not merely repeat it."""
+        seen = {}
+        for name, number, uk, us in self.rows():
+            if uk in seen:
+                prior_where, prior_us = seen[uk]
+                self.assertNotEqual(
+                    us, prior_us,
+                    f"{name}:{number} repeats {uk!r} from {prior_where} with no change",
+                )
+            seen[uk] = (f"{name}:{number}", us)
+
+    def test_no_duplicates_within_a_single_file(self):
+        per_file = {}
+        for name, number, uk, _ in self.rows():
+            key = (name, uk)
+            if key in per_file:
+                self.fail(f"{name}:{number} duplicates {uk!r} from line {per_file[key]}")
+            per_file[key] = number
+
+    def test_source_never_equals_target(self):
+        for name, number, uk, us in self.rows():
+            self.assertNotEqual(uk.lower(), us.lower(), f"{name}:{number} is a no-op")
+
+    def test_correct_american_words_are_never_translated(self):
+        """Regression: the list must not rewrite already-correct prose."""
+        for word in [
+            "usable", "vectorization", "buses", "busing", "minibuses", "gases",
+            "lit", "vice", "dealt", "knelt", "globally", "simultaneous",
+            "cancellation", "curricula", "antennae", "bingeing", "unfeasible",
+            "sanatorium", "jewelry", "color", "center", "gray",
+        ]:
+            self.assertNotIn(word, VOCAB, f"{word!r} is correct American English")
+
+    def test_corrected_pairs(self):
+        for uk, us in [
+            ("useable", "usable"),
+            ("vectorisation", "vectorization"),
+            ("jewellery", "jewelry"),
+            ("pummelled", "pummeled"),
+            ("pummelling", "pummeling"),
+            ("snowploughs", "snowplows"),
+            ("anaesthetist", "anesthetist"),
+        ]:
+            self.assertEqual(VOCAB.get(uk), us, f"{uk} should map to {us}")
+
+    def test_vocabulary_file_is_not_loaded(self):
+        """Register swaps live in a separate file and must stay opt-in."""
+        self.assertTrue((self.DATA / "words-vocabulary.tsv").is_file())
+        for word in ["petrol", "film", "rubbish", "pavement", "disc", "quarter"]:
+            self.assertNotIn(word, VOCAB, f"{word!r} is vocabulary, not spelling")
+
+    def test_usable_is_left_alone_end_to_end(self):
+        text = "A usable feature after vectorization.\n"
+        self.assertEqual(translate(text), text)
+
+
 class TestSpanArithmetic(unittest.TestCase):
     def test_merge_overlapping(self):
         self.assertEqual(sa.merge_spans([(0, 5), (3, 8), (10, 12)]), [(0, 8), (10, 12)])
