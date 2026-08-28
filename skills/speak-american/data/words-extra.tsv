@@ -1,0 +1,59 @@
+# Local additions to the vendored word list, in the same TSV format:
+#   <british><TAB><american>
+# Lines starting with '#' and blank lines are ignored.
+# Entries here override words.tsv when keys collide.
+#
+# Keep to spellings that are unambiguously wrong in American technical prose.
+# Do not add register/dialect swaps that change meaning or tone.
+
+# -ise/-isation gaps in the upstream list
+parameterise	parameterize
+parameterised	parameterized
+parameterises	parameterizes
+parameterising	parameterizing
+parameterisation	parameterization
+parametrise	parametrize
+parametrised	parametrized
+parametrisation	parametrization
+serialisable	serializable
+deserialise	deserialize
+deserialised	deserialized
+deserialises	deserializes
+deserialising	deserializing
+deserialisation	deserialization
+initialiser	initializer
+initialisers	initializers
+serialiser	serializer
+serialisers	serializers
+normaliser	normalizer
+tokenise	tokenize
+tokenised	tokenized
+tokenises	tokenizes
+tokenising	tokenizing
+tokeniser	tokenizer
+tokenisers	tokenizers
+sanitise	sanitize
+sanitised	sanitized
+sanitises	sanitizes
+sanitising	sanitizing
+sanitiser	sanitizer
+sanitisation	sanitization
+randomise	randomize
+randomised	randomized
+randomises	randomizes
+randomising	randomizing
+randomisation	randomization
+prioritise	prioritize
+prioritised	prioritized
+prioritises	prioritizes
+prioritising	prioritizing
+prioritisation	prioritization
+containerise	containerize
+containerised	containerized
+containerisation	containerization
+virtualise	virtualize
+virtualised	virtualized
+virtualisation	virtualization
+memoise	memoize
+memoised	memoized
+memoisation	memoization

@@ -1,0 +1,11 @@
+# Words to never translate, one per line, case-insensitive.
+# Lines starting with '#' and blank lines are ignored.
+#
+# Use this for proper nouns and identifiers that happen to look like British
+# spellings: organization names, product names, cited titles, API fields.
+#
+# Examples (uncomment or add your own):
+# labour          # e.g. "Labour Party"
+# centre          # e.g. "Wellcome Centre", "Centre Pompidou"
+# defence         # e.g. "Ministry of Defence"
+# behaviour       # e.g. a third-party API field named `behaviour`

@@ -1,0 +1,13 @@
+{
+  "name": "speak-american",
+  "owner": {
+    "name": "Mike Green"
+  },
+  "plugins": [
+    {
+      "name": "speak-american",
+      "source": "./",
+      "description": "Deterministically convert British English spellings to American English in Markdown, prose, and code comments."
+    }
+  ]
+}
