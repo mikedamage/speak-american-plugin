@@ -72,6 +72,24 @@ class TestMarkdownStructure(unittest.TestCase):
     def test_inline_code(self):
         self.assertEqual(translate("Use `colour` for colour."), "Use `colour` for color.")
 
+    def test_inline_code_span_wrapping_across_lines(self):
+        """A wrapped span must not mispair the backticks after it."""
+        text = "Prefixes `un re mis\nover pre` then `colour` and colour.\n"
+        out = translate(text)
+        self.assertIn("`un re mis\nover pre`", out)
+        self.assertIn("`colour`", out, "the span after a wrapped one is protected")
+        self.assertTrue(out.rstrip().endswith("and color."))
+
+    def test_blank_line_ends_an_unclosed_span(self):
+        text = "An unclosed ` tick.\n\nA colour after.\n"
+        self.assertIn("A color after.", translate(text))
+
+    def test_fence_backticks_do_not_pair_with_prose(self):
+        text = "```\ncode ` tick\n```\n\nA colour after.\n"
+        out = translate(text)
+        self.assertIn("code ` tick", out)
+        self.assertIn("A color after.", out)
+
     def test_inline_code_double_backtick(self):
         self.assertEqual(translate("``a ` colour`` colour"), "``a ` colour`` color")
 
@@ -423,6 +441,84 @@ class TestReviewTier(unittest.TestCase):
         is never seen as a separate token."""
         text = "A reusable analysis helper; cover triage - unusable.\n"
         self.assertEqual(translate(text), text)
+
+
+class TestPrefixResolution(unittest.TestCase):
+    """A prefixed derivative is its own token, so the stem is resolved."""
+
+    REVIEW = sa.load_review_vocabulary("us")
+
+    def resolve(self, word, ignored=frozenset()):
+        lookup = dict(VOCAB)
+        lookup.update(self.REVIEW)
+        return sa.resolve(word, lookup, frozenset(self.REVIEW), ignored)
+
+    def test_reported_miss_is_caught(self):
+        text = "# a mislabelled file is the failure this module catches\n"
+        self.assertEqual(
+            translate(text, ".py"),
+            "# a mislabeled file is the failure this module catches\n",
+        )
+
+    def test_common_derivatives(self):
+        for word, expected in [
+            ("mislabelled", "mislabeled"),
+            ("unfavourable", "unfavorable"),
+            ("reorganised", "reorganized"),
+            ("unrecognised", "unrecognized"),
+            ("overemphasised", "overemphasized"),
+            ("remould", "remold"),
+            ("demould", "demold"),
+            ("uncatalogued", "uncataloged"),
+            ("oversceptical", "overskeptical"),
+        ]:
+            self.assertEqual(self.resolve(word)[0], expected, word)
+
+    def test_does_not_fire_on_coincidental_splits(self):
+        """The stem must be a listed word, not just a leftover string."""
+        for word in [
+            "reusable", "unusable", "revise", "research", "release", "reuse",
+            "misuse", "demise", "precise", "concise", "interest", "understand",
+            "subtle", "coverage", "recover", "discover", "proper", "content",
+            "cover", "region", "designed", "detail", "resource", "internal",
+        ]:
+            self.assertIsNone(self.resolve(word)[0], f"{word!r} should not match")
+
+    def test_short_stems_are_refused(self):
+        """A stem below MIN_STEM_LENGTH is too short to trust."""
+        self.assertGreaterEqual(sa.MIN_STEM_LENGTH, 4)
+        lookup = {"abc": "xyz"}
+        self.assertIsNone(sa.resolve("reabc", lookup)[0])
+
+    def test_longest_prefix_wins(self):
+        self.assertEqual(sa.PREFIXES[0], max(sa.PREFIXES, key=len))
+        self.assertLess(sa.PREFIXES.index("under"), sa.PREFIXES.index("un"))
+
+    def test_case_is_preserved_on_a_derivative(self):
+        self.assertEqual(translate("Mislabelled files.\n"), "Mislabeled files.\n")
+        self.assertEqual(translate("MISLABELLED FILES.\n"), "MISLABELED FILES.\n")
+
+    def test_review_flag_propagates_through_a_prefix(self):
+        replacement, review = self.resolve("reanalyses")
+        self.assertEqual(replacement, "reanalyzes")
+        self.assertTrue(review, "a derivative of a review word stays review")
+
+    def test_exclusion_applies_to_the_whole_word(self):
+        self.assertIsNone(self.resolve("mislabelled", frozenset({"mislabelled"}))[0])
+        self.assertEqual(self.resolve("mislabelled")[0], "mislabeled")
+
+    def test_derivative_is_not_applied_when_stem_is_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "f.md"
+            path.write_text("The reanalyses run nightly.\n", encoding="utf-8")
+            code = sa.main([str(path), "--no-gitignore", "--write"])
+            self.assertEqual(path.read_text(encoding="utf-8"),
+                             "The reanalyses run nightly.\n")
+            self.assertEqual(code, sa.EXIT_FOUND)
+
+    def test_identifier_guard_still_applies_to_derivatives(self):
+        self.assertEqual(translate("The mislabelled_file var.\n"),
+                         "The mislabelled_file var.\n")
 
 
 class TestSpanArithmetic(unittest.TestCase):

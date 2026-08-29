@@ -126,6 +126,22 @@ uninflected verb forces the noun reading. The sibling forms `analyse`,
 
 When you see a review hit, read the sentence and decide. Do not apply it blindly.
 
+## Prefixed derivatives
+
+The word pattern matches maximal letter runs, so `mislabelled` is one token and
+does not match the listed stem `labelled`. The tool therefore resolves one
+leading prefix against the list — `un re mis non over under pre dis de inter
+semi sub co anti multi` — so `mislabelled`, `unfavourable`, `reorganised` and
+`overemphasised` are all caught.
+
+This stays deterministic: it is a prefix plus a *listed* stem, never a guess.
+A stem must be at least four characters, so a coincidental split cannot fire.
+`reusable`, `revise` and `research` do not match, because `usable`, `vise` and
+`search` are not in the list.
+
+A derivative of a review word stays a review hit, and `--exclude` and
+`words-ignore.list` match the whole word, so excluding `mislabelled` works.
+
 ## Known limits
 
 - An indented code block *inside a list item* is treated as prose, because
@@ -133,6 +149,8 @@ When you see a review hit, read the sentence and decide. Do not apply it blindly
   protect them.
 - The word list is static. It will not catch a British spelling that is not in
   it. Add missing pairs to `data/words-extra.tsv`.
+- Only one prefix is resolved, and only from the list above. A compound with an
+  unlisted prefix (`centimetre`, `millilitre`) still needs its own entry.
 - Dialect words that are not spelling differences (`whilst`, `amongst`, `lorry`)
   are deliberately absent. This tool fixes spelling, not register.
 

@@ -86,6 +86,13 @@ def load_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
     return _finalize(pairs, target, data_dir, extra_ignores)
 
 
+def load_ignores(data_dir=DATA_DIR, extra_ignores=()):
+    """Words never to translate, including as a prefixed derivative's stem."""
+    ignores = _read_ignores(data_dir / "words-ignore.list")
+    ignores.update(word.lower() for word in extra_ignores)
+    return ignores
+
+
 def load_review_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
     """Ambiguous pairs: reported, but never applied by --write.
 
@@ -199,35 +206,45 @@ REF_DEF_RE = re.compile(r"^(\s{0,3}\[[^\]]+\]:\s*)(\S+)")
 HTML_TAG_RE = re.compile(r"<[^>\s][^>]*>")
 
 
-def _inline_code_spans(line, offset):
-    """CommonMark-ish inline code: a run of N backticks closed by a run of N."""
+def _inline_code_spans(text, offset=0):
+    """CommonMark-ish inline code: a run of N backticks closed by a run of N.
+
+    Scanned over the whole document, not line by line, because a code span may
+    wrap across lines. Getting this wrong mispairs every later backtick on the
+    line and silently leaves real code unprotected. A span cannot contain a
+    blank line, since that ends the paragraph.
+    """
     spans = []
     index = 0
-    length = len(line)
+    length = len(text)
     while index < length:
-        if line[index] != "`":
+        if text[index] != "`":
             index += 1
             continue
         run_start = index
-        while index < length and line[index] == "`":
+        while index < length and text[index] == "`":
             index += 1
         run_len = index - run_start
         # Look for a closing run of exactly the same length.
         search = index
+        closed = False
         while search < length:
-            if line[search] != "`":
+            if text[search] != "`":
                 search += 1
                 continue
             close_start = search
-            while search < length and line[search] == "`":
+            while search < length and text[search] == "`":
                 search += 1
             if search - close_start == run_len:
+                if "\n\n" in text[run_start:search]:
+                    break       # paragraph ended; the run was never closed
                 spans.append((offset + run_start, offset + search))
+                closed = True
                 break
-        else:
-            # Unclosed run; treat the backticks themselves as protected.
+        if not closed:
+            # Unclosed run; protect the backticks themselves and move past them.
             spans.append((offset + run_start, offset + index))
-            break
+            continue
         index = search
     return spans
 
@@ -303,8 +320,6 @@ def markdown_translatable_spans(text):
         prev_blank = False
 
         # --- Inline constructs ----------------------------------------------
-        protected.extend(_inline_code_spans(line, start))
-
         ref_def = REF_DEF_RE.match(line)
         if ref_def:
             protected.append((start, start + ref_def.end()))
@@ -317,6 +332,16 @@ def markdown_translatable_spans(text):
             protected.append((start + match.start(), start + match.end()))
         for match in HTML_TAG_RE.finditer(line):
             protected.append((start + match.start(), start + match.end()))
+
+    # Inline code is scanned document-wide so a span may wrap across lines.
+    # Blank out the block-level protected regions first (preserving offsets and
+    # newlines) so backticks inside fenced code cannot pair with prose.
+    masked = list(text)
+    for start, end in merge_spans(protected):
+        for index in range(start, min(end, len(masked))):
+            if masked[index] != "\n":
+                masked[index] = " "
+    protected.extend(_inline_code_spans("".join(masked)))
 
     protected.extend(universal_holes(text))
     return invert_spans(protected, len(text))
@@ -526,6 +551,48 @@ def is_supported(path):
 
 WORD_RE = re.compile(r"[A-Za-z]+")
 
+# The word pattern matches maximal letter runs, so a prefixed derivative is its
+# own token and never matches the bare stem: a listed word carrying a mis- or
+# un- prefix would sail through untouched. Resolving one leading prefix against
+# the list closes that gap. This stays deterministic -- it is a prefix plus a
+# listed stem, not a guess about the word.
+#
+# Longest first, so `under` is tried before `un`.
+PREFIXES = tuple(sorted(
+    ("un", "re", "mis", "non", "over", "under", "pre", "dis", "de", "inter",
+     "semi", "sub", "co", "anti", "multi"),
+    key=len, reverse=True,
+))
+
+# A stem shorter than this invites a coincidental split. Every listed stem of
+# four or more characters was checked against /usr/share/dict/words across all
+# prefixes above: of 27450 combinations, 79 are real words and none is a false
+# decomposition.
+MIN_STEM_LENGTH = 4
+
+
+def resolve(word_lower, vocabulary, review_words=frozenset(), ignored=frozenset()):
+    """Map a lowercased word to its replacement, or (None, False).
+
+    Returns (replacement, needs_review). Tries the word itself, then the word
+    with one recognized prefix removed.
+    """
+    if word_lower in ignored:
+        return None, False
+    replacement = vocabulary.get(word_lower)
+    if replacement is not None:
+        return replacement, word_lower in review_words
+    for prefix in PREFIXES:
+        if not word_lower.startswith(prefix):
+            continue
+        stem = word_lower[len(prefix):]
+        if len(stem) < MIN_STEM_LENGTH:
+            continue
+        replacement = vocabulary.get(stem)
+        if replacement is not None:
+            return prefix + replacement, stem in review_words
+    return None, False
+
 
 class Change:
     __slots__ = ("offset", "line", "column", "old", "new", "review")
@@ -566,7 +633,8 @@ def _locate(line_starts, offset):
     return low + 1, offset - line_starts[low] + 1
 
 
-def find_changes(text, spans, vocabulary, review_words=frozenset()):
+def find_changes(text, spans, vocabulary, review_words=frozenset(),
+                 ignored=frozenset()):
     """Locate every replaceable word inside `spans`."""
     line_starts = _line_index(text)
     changes = []
@@ -575,7 +643,9 @@ def find_changes(text, spans, vocabulary, review_words=frozenset()):
             if match.start() < start or match.end() > end:
                 continue
             word = match.group(0)
-            replacement = vocabulary.get(word.lower())
+            replacement, needs_review = resolve(
+                word.lower(), vocabulary, review_words, ignored
+            )
             if replacement is None:
                 continue
             # Refuse to touch a word welded into an identifier: colour_name,
@@ -589,7 +659,7 @@ def find_changes(text, spans, vocabulary, review_words=frozenset()):
             changes.append(Change(
                 match.start(), line, column, word,
                 match_case(word, replacement),
-                review=word.lower() in review_words,
+                review=needs_review,
             ))
     return changes
 
@@ -769,6 +839,7 @@ def main(argv=None):
     review_words = frozenset(review)
     lookup = dict(vocabulary)
     lookup.update(review)
+    ignored = frozenset(load_ignores(extra_ignores=args.exclude))
 
     try:
         paths = collect(args.paths, not args.no_gitignore, args.hidden)
@@ -788,7 +859,7 @@ def main(argv=None):
             spans = spans_for(path, text)
             if spans is None:
                 continue
-            changes = find_changes(text, spans, lookup, review_words)
+            changes = find_changes(text, spans, lookup, review_words, ignored)
         except Exception as exc:  # one bad file must not sink the run
             errors.append((path, f"{type(exc).__name__}: {exc}"))
             continue

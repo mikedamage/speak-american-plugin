@@ -67,6 +67,13 @@ files it translates comments and Python docstrings only — never identifiers,
 never arbitrary string literals — using a string-aware scanner, so a `#` or `//`
 inside a string is not mistaken for a comment.
 
+Because the matcher works on maximal letter runs, a prefixed derivative is its
+own token — `mislabelled` does not match the listed stem `labelled`. So one
+leading prefix (`un`, `re`, `mis`, `over`, and eleven more) is resolved against
+the list. It is still deterministic: prefix plus a *listed* stem of at least
+four characters, never a guess. `reusable` and `revise` do not match, because
+`usable` and `vise` are not in the list.
+
 Everywhere, it preserves capitalization (`COLOUR` → `COLOR`, not `color`),
 leaves URLs and email addresses alone, and refuses to touch words welded into
 identifiers (`colour_name`, `myColour`, `colour2`).
