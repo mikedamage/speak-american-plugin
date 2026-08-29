@@ -81,6 +81,14 @@ identifiers (`colour_name`, `myColour`, `colour2`).
 Comment syntax is recognized for `#`, `//`, `/* */`, `--`, `--[[ ]]`, and
 `<!-- -->` across roughly fifty file extensions.
 
+The bias throughout is toward under-translating rather than over-translating.
+In a source tree a bad rewrite usually breaks the build; in a docs corpus
+nothing catches it, and inline code there is often a verbatim external string —
+an API field, a vendor data value, a term misspelled upstream and documented
+that way deliberately. Rewriting one of those does not read as a typo, it
+desynchronizes the doc from the live data. A missed British spelling is
+cosmetic; a rewritten API string is a wrong document that looks right.
+
 Writes are atomic and per-file. A file that fails to parse is reported and
 skipped; it does not abort the run or leave a half-written tree.
 

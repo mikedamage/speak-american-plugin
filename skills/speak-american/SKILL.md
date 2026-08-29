@@ -78,6 +78,19 @@ deliberately left alone — read them yourself.
 Prefer running the check on specific files over the whole repository. A
 repo-wide `--write` can touch files unrelated to the current task.
 
+### Why the dry run matters more in a docs repo
+
+In a source tree a bad rewrite usually breaks the build. In a documentation
+corpus nothing catches it. Inline code in docs is often a verbatim external
+string — an API field name, a vendor's data value, a controlled vocabulary term
+misspelled upstream and documented that way on purpose. Rewriting one of those
+does not read as a typo: it silently desynchronizes the document from the live
+data, and the next person greps for a string that no longer exists.
+
+That is why protection failures matter more than missed words here. A missed
+British spelling is cosmetic. A rewritten API string is a wrong document that
+looks right.
+
 ## What it will and will not touch
 
 It is structure-aware, so it does not corrupt what it walks over.

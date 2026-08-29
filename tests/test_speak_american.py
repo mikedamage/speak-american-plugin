@@ -80,6 +80,43 @@ class TestMarkdownStructure(unittest.TestCase):
         self.assertIn("`colour`", out, "the span after a wrapped one is protected")
         self.assertTrue(out.rstrip().endswith("and color."))
 
+    def test_wrapped_span_does_not_invert_the_spans_after_it(self):
+        """The failure mode is inversion, not loss.
+
+        When an opening span wraps, the spans on the continuation line pair off
+        by one: the code fragments get exposed while the prose between them is
+        protected. Shapes taken from a real hard-wrapped technical corpus.
+        """
+        text = (
+            "Components are `Improved\n"
+            "bermudagrass`, `Pasture` and `Tall fescue` in the centre column.\n"
+        )
+        out = translate(text)
+        # Every code fragment survives verbatim...
+        for fragment in ["`Improved\nbermudagrass`", "`Pasture`", "`Tall fescue`"]:
+            self.assertIn(fragment, out, f"{fragment} must stay protected")
+        # ...and the prose between them is still translated.
+        self.assertIn("in the center column", out)
+
+    def test_wrapped_span_holding_a_json_payload(self):
+        text = (
+            'The payload is `{"error":{"code":400,"message":"Pagination is not\n'
+            'supported."}}` which the analyser returns with a grey flag.\n'
+        )
+        out = translate(text)
+        self.assertIn('"Pagination is not\nsupported."}}`', out)
+        self.assertIn("the analyzer returns with a gray flag", out)
+
+    def test_wrapped_span_holding_a_shell_invocation(self):
+        text = (
+            "Run `parcels --county\n"
+            "TN` then find `/parcel.json` for the colour data.\n"
+        )
+        out = translate(text)
+        self.assertIn("`parcels --county\nTN`", out)
+        self.assertIn("`/parcel.json`", out)
+        self.assertIn("for the color data", out)
+
     def test_blank_line_ends_an_unclosed_span(self):
         text = "An unclosed ` tick.\n\nA colour after.\n"
         self.assertIn("A color after.", translate(text))
