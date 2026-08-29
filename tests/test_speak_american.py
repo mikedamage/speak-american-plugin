@@ -323,6 +323,53 @@ class TestCodeComments(unittest.TestCase):
         self.assertIn("https://x.com/colour", out)
         self.assertIn("for color", out)
 
+    # --- markdown inside comments ----------------------------------------
+    # Comments and docstrings routinely carry markdown, and a backticked token
+    # there is usually an identifier or an external field name.
+
+    def test_backticks_protect_a_token_in_a_python_docstring(self):
+        text = '"""The API returns `colour` and `centre`. A parcel labelled."""\n'
+        out = translate(text, ".py")
+        self.assertIn("`colour`", out, "a backticked field name is not prose")
+        self.assertIn("`centre`", out)
+        self.assertIn("A parcel labeled.", out, "surrounding prose still fixed")
+
+    def test_backticks_protect_a_token_in_a_hash_comment(self):
+        text = "# The API returns `colour`; the parcel is labelled\n"
+        out = translate(text, ".py")
+        self.assertIn("`colour`", out)
+        self.assertIn("the parcel is labeled", out)
+
+    def test_backticks_protect_a_token_in_a_slash_comment(self):
+        text = "// Field `colour` from the vendor; the value is labelled\n"
+        out = translate(text, ".ts")
+        self.assertIn("`colour`", out)
+        self.assertIn("the value is labeled", out)
+
+    def test_backticks_protect_a_token_in_a_block_comment(self):
+        text = "/* Field `centre` is theirs; ours is labelled */\n"
+        out = translate(text, ".ts")
+        self.assertIn("`centre`", out)
+        self.assertIn("ours is labeled", out)
+
+    def test_backticks_protect_a_token_in_a_sql_comment(self):
+        text = "-- Column `colour` upstream; the row is labelled\n"
+        out = translate(text, ".sql")
+        self.assertIn("`colour`", out)
+        self.assertIn("the row is labeled", out)
+
+    def test_comment_without_backticks_is_unaffected(self):
+        text = "# the colour is grey and labelled\n"
+        self.assertEqual(translate(text, ".py"),
+                         "# the color is gray and labeled\n")
+
+    def test_backtick_run_cannot_pair_out_of_a_comment_into_code(self):
+        text = 'x = "a ` tick"\n# a `colour` here\ny = "another ` tick"\n'
+        out = translate(text, ".py")
+        self.assertIn('x = "a ` tick"', out)
+        self.assertIn("`colour`", out)
+        self.assertIn('y = "another ` tick"', out)
+
     def test_unknown_extension_is_skipped(self):
         self.assertIsNone(sa.spans_for(Path("x.bin"), "colour"))
 

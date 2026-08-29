@@ -475,6 +475,20 @@ def comment_spans(text, syntax):
     return spans
 
 
+def _inline_code_holes(text, spans):
+    """Inline code spans occurring inside `spans`, for subtraction.
+
+    Comments and docstrings routinely carry markdown, and a backticked token in
+    one is usually an identifier or an external field name -- exactly the thing
+    that must not be rewritten. Scanned per span, so a run cannot pair across
+    the boundary out of a comment and into code.
+    """
+    holes = []
+    for start, end in spans:
+        holes.extend(_inline_code_spans(text[start:end], start))
+    return holes
+
+
 def python_translatable_spans(text):
     """Python comments plus docstrings, via tokenize when it works.
 
@@ -497,7 +511,11 @@ def python_translatable_spans(text):
     try:
         tokens = list(tokenize.generate_tokens(io.StringIO(text).readline))
     except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
-        return subtract_spans(comment_spans(text, HASH), universal_holes(text))
+        fallback = comment_spans(text, HASH)
+        return subtract_spans(
+            fallback,
+            universal_holes(text) + _inline_code_holes(text, fallback),
+        )
 
     prev_meaningful = None
     for token in tokens:
@@ -514,11 +532,16 @@ def python_translatable_spans(text):
         if token.type not in (tokenize.COMMENT,):
             prev_meaningful = token.type
 
-    return subtract_spans(spans, universal_holes(text))
+    return subtract_spans(
+        spans, universal_holes(text) + _inline_code_holes(text, spans)
+    )
 
 
 def code_translatable_spans(text, syntax):
-    return subtract_spans(comment_spans(text, syntax), universal_holes(text))
+    spans = comment_spans(text, syntax)
+    return subtract_spans(
+        spans, universal_holes(text) + _inline_code_holes(text, spans)
+    )
 
 
 # ---------------------------------------------------------------------------
