@@ -65,7 +65,9 @@ indented code, inline code spans, link and image destinations, reference labels,
 footnote markers, autolinks, raw HTML tags, and front matter keys. In source
 files it translates comments and Python docstrings only — never identifiers,
 never arbitrary string literals — using a string-aware scanner, so a `#` or `//`
-inside a string is not mistaken for a comment.
+inside a string is not mistaken for a comment. Backticks inside a comment or
+docstring protect what they wrap, because a backticked token there is nearly
+always an identifier or an external field name.
 
 Because the matcher works on maximal letter runs, a prefixed derivative is its
 own token — `mislabelled` does not match the listed stem `labelled`. So one
