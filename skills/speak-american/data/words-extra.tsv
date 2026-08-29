@@ -9,37 +9,35 @@
 # ---------------------------------------------------------------------------
 # DO NOT EXTEND THIS LIST BY SUFFIX RULE. Add words one at a time, by hand.
 #
-# It is tempting to generate entries with a rule like -ise -> -ize or
-# -lled -> -led. Both have almost no signal. Measured over one real 330-file
-# technical corpus:
+# A suffix rule looks cheaper than a curated list and is not. Most of what it
+# matches is not a dialect choice at all. In one US-authored technical corpus,
+# 569 of 577 -lled/-lling matches were words whose stem already ends in -ll
+# (call, drill, install), and 176 of 324 -ise matches were stem-internal
+# (raise, noise), with another 51 being -wise adverbs. Those classes are
+# mechanically excludable, and a competent rule would exclude them.
 #
-#   -ise/-ised/-ises/-ising   37 distinct words, 324 occurrences, ALL correct
-#                             English, ZERO British verb forms. advertise,
-#                             compromise, exercise, franchise, precise,
-#                             promise, surprise, otherwise, expertise...
+# What remains is not excludable. `controlled` and `labelled` are the same
+# orthographic shape with opposite answers: American doubles the l only when
+# the final syllable is stressed, so conTROLLED is correct in both dialects
+# while LAbelled is British and becomes labeled. The discriminator is stress
+# placement, which no rule over letters can see. The residue is also where the
+# true positives live -- `mislabelled` is in it.
 #
-#   -lled/-lling/-ller        42 distinct words, 577 occurrences, ALL correct
-#                             American. billed, called, controlled, drilling,
-#                             dwelling, falling, installed, smaller, telling...
+# This list encodes 177 such stress judgments. That is what it is for: to
+# record the calls a rule cannot make.
 #
-# A naive -ise pass over that corpus would corrupt 324 correct words to fix 0.
-# A naive double-l pass, 577 to fix 0.
-#
-# The discriminator is etymological and prosodic, not orthographic. -ise is a
-# British verb ending but also the ordinary ending of French-derived nouns.
-# Double-l before a suffix is correct American when the stress falls on the
-# final syllable (control -> controlled) and British only when it does not
-# (label -> labelled). No suffix rule can see stress or etymology.
+# On the numbers: the counts above are one author, one technical domain, and
+# describe what a NAIVE rule does to a US-authored corpus -- do not quote them
+# as a general result. In UK-authored text the -ise class would be thick with
+# randomised, organised, characterised and a rule would have real signal there.
+# What does generalize is the mechanism, and it is register-independent: a
+# suffix rule is dominated by classes that are not dialect choices, and once
+# those are excluded the residue turns on stress and etymology rather than
+# orthography.
 #
 # The one rule that is safe is the prefix resolution in the script, and only
 # because it composes a KNOWN-good pair with a prefix: the etymology question
 # is already settled by a human having put the stem on the list.
-#
-# SCOPE OF THOSE NUMBERS: one author, one technical domain, and the -ise
-# population there is dominated by real-estate and GIS vocabulary. The shape of
-# the result should generalize -- these suffixes carry little signal anywhere --
-# but the counts should not be inherited. Anyone working a medical, legal or
-# literary corpus should re-measure rather than quote these figures.
 # ---------------------------------------------------------------------------
 
 # -ise/-isation gaps in the upstream list

@@ -469,8 +469,35 @@ class TestWordListIntegrity(unittest.TestCase):
             "sanatorium", "jewelry", "color", "center", "gray",
             # Standard American English; Merriam-Webster's main entries.
             "aesthetic", "aesthetics", "aesthetically", "aesthete",
+            "fillet", "filleted", "filleting", "fillets", "woolly", "woollies",
+            # Inflected forms of entries dropped earlier; the singular going
+            # without its plural is an easy miss.
+            "cancellations", "philtres",
         ]:
             self.assertNotIn(word, VOCAB, f"{word!r} is correct American English")
+
+    def test_dropped_entries_left_no_inflected_survivors(self):
+        """Dropping a singular must take its plural and participles with it."""
+        for stem in ["cancellation", "philtre", "fillet", "woolly", "aesthet",
+                     "antenna", "minibus", "sanatorium"]:
+            survivors = [k for k in VOCAB if k.startswith(stem)]
+            self.assertEqual(survivors, [], f"{stem}: {survivors}")
+
+    def test_double_l_entries_respect_the_stress_rule(self):
+        """American doubles the l only when the final syllable is stressed.
+
+        So the list may de-double LAbelled but must never touch conTROLLED,
+        which is correct in both dialects. This is the distinction no suffix
+        rule can make, and the reason the list is curated by hand.
+        """
+        for word in ["controlled", "controlling", "uncontrolled", "installed",
+                     "compelled", "expelled", "rebelled", "patrolled",
+                     "propelled", "excelled", "enrolled", "annulled"]:
+            self.assertIsNone(sa.resolve(word, VOCAB)[0],
+                              f"{word!r} is correct American double-l")
+        for word in ["labelled", "travelled", "modelled", "cancelled"]:
+            self.assertIsNotNone(sa.resolve(word, VOCAB)[0],
+                                 f"{word!r} is British and should be fixed")
 
     def test_corrected_pairs(self):
         for uk, us in [
