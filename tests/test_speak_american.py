@@ -127,6 +127,83 @@ class TestMarkdownStructure(unittest.TestCase):
         self.assertIn("code ` tick", out)
         self.assertIn("A color after.", out)
 
+    # --- fenced block / wrapped span interaction -------------------------
+    # Block regions are blanked before the document-wide backtick scan. These
+    # cover the ways a fence and an inline span can collide; shapes suggested
+    # by a review of a real hard-wrapped corpus.
+
+    def test_wrapped_span_immediately_followed_by_a_fence(self):
+        text = (
+            'The payload is `{"error":{"code":400,"message":"not\n'
+            'supported"}}` and the colour is grey.\n'
+            "```json\n"
+            '{"colour": "grey"}\n'
+            "```\n"
+            "Trailing colour prose.\n"
+        )
+        out = translate(text)
+        self.assertIn('"not\nsupported"}}`', out, "wrapped span must survive")
+        self.assertIn('{"colour": "grey"}', out, "fence body must survive")
+        self.assertIn("the color is gray", out)
+        self.assertIn("Trailing color prose.", out)
+
+    def test_unclosed_tick_then_blank_line_then_a_fence(self):
+        """A fence's own backticks must not close an earlier unclosed run."""
+        text = (
+            "An unclosed ` tick in prose.\n\n"
+            "Some colour prose here.\n\n"
+            "```python\n"
+            "colour = 1  # centre\n"
+            "```\n\n"
+            "Final grey line.\n"
+        )
+        out = translate(text)
+        self.assertIn("colour = 1  # centre", out, "fence body must survive")
+        self.assertIn("Some color prose here.", out)
+        self.assertIn("Final gray line.", out)
+
+    def test_unclosed_tick_with_fence_on_the_very_next_line(self):
+        text = "Use `foo\n```python\ncolour = 1\n```\nmore colour\n"
+        out = translate(text)
+        self.assertIn("colour = 1", out)
+        self.assertTrue(out.rstrip().endswith("more color"))
+
+    def test_fence_body_with_an_odd_backtick_count(self):
+        """The classic way a fence leaks a backtick into prose pairing."""
+        text = "```\n` ` `\n```\nA `colour` and colour.\n"
+        out = translate(text)
+        self.assertIn("` ` `", out)
+        self.assertIn("`colour`", out, "inline span after the fence stays paired")
+        self.assertTrue(out.rstrip().endswith("and color."))
+
+    def test_two_wrapped_spans_separated_by_a_fence(self):
+        text = ("A `one\ntwo` mid colour.\n```\ncolour\n```\n"
+                "B `three\nfour` end colour.\n")
+        out = translate(text)
+        self.assertIn("`one\ntwo`", out)
+        self.assertIn("`three\nfour`", out)
+        self.assertIn("```\ncolour\n```", out)
+        self.assertEqual(out.count("mid color."), 1)
+        self.assertEqual(out.count("end color."), 1)
+
+    def test_span_wrapping_over_three_lines(self):
+        text = "A `aa\nbb\ncc` then colour.\n"
+        out = translate(text)
+        self.assertIn("`aa\nbb\ncc`", out)
+        self.assertIn("then color.", out)
+
+    def test_stray_backtick_inside_a_tilde_fence(self):
+        text = "~~~\na ` tick and colour\n~~~\nmore colour\n"
+        out = translate(text)
+        self.assertIn("a ` tick and colour", out)
+        self.assertTrue(out.rstrip().endswith("more color"))
+
+    def test_stray_backtick_inside_an_indented_block(self):
+        text = "text\n\n    a ` tick colour\n\nmore colour\n"
+        out = translate(text)
+        self.assertIn("    a ` tick colour", out)
+        self.assertTrue(out.rstrip().endswith("more color"))
+
     def test_inline_code_double_backtick(self):
         self.assertEqual(translate("``a ` colour`` colour"), "``a ` colour`` color")
 

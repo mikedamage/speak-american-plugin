@@ -5,6 +5,36 @@
 #
 # Keep to spellings that are unambiguously wrong in American technical prose.
 # Do not add register/dialect swaps that change meaning or tone.
+#
+# ---------------------------------------------------------------------------
+# DO NOT EXTEND THIS LIST BY SUFFIX RULE. Add words one at a time, by hand.
+#
+# It is tempting to generate entries with a rule like -ise -> -ize or
+# -lled -> -led. Both have almost no signal. Measured over one real 330-file
+# technical corpus:
+#
+#   -ise/-ised/-ises/-ising   37 distinct words, 324 occurrences, ALL correct
+#                             English, ZERO British verb forms. advertise,
+#                             compromise, exercise, franchise, precise,
+#                             promise, surprise, otherwise, expertise...
+#
+#   -lled/-lling/-ller        42 distinct words, 577 occurrences, ALL correct
+#                             American. billed, called, controlled, drilling,
+#                             dwelling, falling, installed, smaller, telling...
+#
+# A naive -ise pass over that corpus would corrupt 324 correct words to fix 0.
+# A naive double-l pass, 577 to fix 0.
+#
+# The discriminator is etymological and prosodic, not orthographic. -ise is a
+# British verb ending but also the ordinary ending of French-derived nouns.
+# Double-l before a suffix is correct American when the stress falls on the
+# final syllable (control -> controlled) and British only when it does not
+# (label -> labelled). No suffix rule can see stress or etymology.
+#
+# The one rule that is safe is the prefix resolution in the script, and only
+# because it composes a KNOWN-good pair with a prefix: the etymology question
+# is already settled by a human having put the stem on the list.
+# ---------------------------------------------------------------------------
 
 # -ise/-isation gaps in the upstream list
 parameterise	parameterize
