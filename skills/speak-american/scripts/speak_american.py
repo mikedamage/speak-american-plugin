@@ -482,6 +482,18 @@ def _inline_code_holes(text, spans):
     one is usually an identifier or an external field name -- exactly the thing
     that must not be rewritten. Scanned per span, so a run cannot pair across
     the boundary out of a comment and into code.
+
+    ORDERING INVARIANT: `spans` must be the RAW comment/docstring spans, before
+    URL and email holes are subtracted. A backticked URL is ordinary in a
+    docstring:
+
+        The viewer at `https://example.com/{site}` is both page and API,
+        and its JavaScript reads `var session` out of the HTML
+
+    Cutting the URL hole first would split that region in two, leaving an odd
+    backtick count on each side, and the runs would pair off by one exactly as
+    they did across a wrapped Markdown span. Compute these holes from the whole
+    region and let subtract_spans() take the union.
     """
     holes = []
     for start, end in spans:
@@ -532,6 +544,8 @@ def python_translatable_spans(text):
         if token.type not in (tokenize.COMMENT,):
             prev_meaningful = token.type
 
+    # Both hole sets are computed from the raw spans; see the ordering
+    # invariant in _inline_code_holes before reordering this.
     return subtract_spans(
         spans, universal_holes(text) + _inline_code_holes(text, spans)
     )
@@ -539,6 +553,8 @@ def python_translatable_spans(text):
 
 def code_translatable_spans(text, syntax):
     spans = comment_spans(text, syntax)
+    # Both hole sets are computed from the raw spans; see the ordering
+    # invariant in _inline_code_holes before reordering this.
     return subtract_spans(
         spans, universal_holes(text) + _inline_code_holes(text, spans)
     )

@@ -370,6 +370,49 @@ class TestCodeComments(unittest.TestCase):
         self.assertIn("`colour`", out)
         self.assertIn('y = "another ` tick"', out)
 
+    def test_backticked_url_in_a_docstring_does_not_split_the_pairing(self):
+        """Ordering invariant: URL holes must not fragment the backtick scan.
+
+        A backticked URL is ordinary in a docstring. If the URL hole were cut
+        before the inline-code scan, the region would split with an odd tick
+        count on each side and the runs after it would pair off by one.
+        """
+        text = (
+            '"""Scrape the viewer.\n\n'
+            "The public map viewer at `https://maps.example.com/{site}` is both\n"
+            "the page and the API -- its JavaScript reads `var sessionserver`\n"
+            "and the colour of the parcel is grey, labelled by centre.\n"
+            '"""\n'
+        )
+        out = translate(text, ".py")
+        self.assertIn("`https://maps.example.com/{site}`", out)
+        self.assertIn("`var sessionserver`", out)
+        self.assertIn("the color of the parcel is gray, labeled by center.", out)
+
+    def test_backticked_url_in_a_hash_comment(self):
+        text = "# see `https://x.com/a` then `colour` and labelled\n"
+        out = translate(text, ".py")
+        self.assertIn("`colour`", out)
+        self.assertTrue(out.rstrip().endswith("and labeled"))
+
+    def test_backticked_url_in_a_slash_comment(self):
+        text = "// see `https://x.com/a` then `colour` and labelled\n"
+        out = translate(text, ".ts")
+        self.assertIn("`colour`", out)
+        self.assertTrue(out.rstrip().endswith("and labeled"))
+
+    def test_backticked_email_does_not_split_the_pairing(self):
+        text = "# mail `a@b.com` then `colour` and labelled\n"
+        out = translate(text, ".py")
+        self.assertIn("`colour`", out)
+        self.assertTrue(out.rstrip().endswith("and labeled"))
+
+    def test_two_backticked_urls_with_a_span_between(self):
+        text = "# `https://a.com` x `https://b.com` y `centre` labelled\n"
+        out = translate(text, ".py")
+        self.assertIn("`centre`", out)
+        self.assertTrue(out.rstrip().endswith("labeled"))
+
     def test_unknown_extension_is_skipped(self):
         self.assertIsNone(sa.spans_for(Path("x.bin"), "colour"))
 
