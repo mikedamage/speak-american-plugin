@@ -57,6 +57,7 @@ deliberately left alone — read them yourself.
 |------|--------|
 | `--write` | Apply changes. Default is a dry run. |
 | `--json` | Machine-readable output. Use when you need to reason about specific hits. |
+| `--context` | Show the surrounding sentence for every hit. Review hits always show it. |
 | `--target uk` | Reverse direction: American to British. |
 | `--exclude WORD` | Never translate this word. Repeatable. |
 | `--no-gitignore` | Do not skip git-ignored files. |
@@ -73,7 +74,9 @@ deliberately left alone — read them yourself.
    third-party API field named `behaviour`, a quoted book title), do **not**
    apply it. Add it to `data/words-ignore.list` or pass `--exclude`, then re-run.
 5. Hits marked `[review - ambiguous, not applied]` are never applied by
-   `--write`. Read the sentence and edit by hand if the change is right.
+   `--write`. Each one prints the sentence it sits in, on the line below —
+   **decide from that, do not reopen the file.** If the change is right, make
+   it by hand.
 
 Prefer running the check on specific files over the whole repository. A
 repo-wide `--write` can touch files unrelated to the current task.
@@ -146,7 +149,17 @@ The tell is grammatical: a determiner (`these`, `two`, `the`) followed by an
 uninflected verb forces the noun reading. The sibling forms `analyse`,
 `analysed` and `analysing` are unambiguously British and are applied normally.
 
-When you see a review hit, read the sentence and decide. Do not apply it blindly.
+When you see a review hit, read the sentence and decide. Do not apply it
+blindly. The report gives you the sentence, reassembled across line wraps:
+
+```
+  127:12  analyses -> analyzes   [review - ambiguous, not applied]
+          those collide when two analyses run at once
+```
+
+That is a plural noun and correct — leave it. Under `--json` the same text
+arrives as a `context` field on the change. Adjudicating from the report costs
+nothing; reopening the file costs a read.
 
 ## Prefixed derivatives
 

@@ -640,25 +640,97 @@ def resolve(word_lower, vocabulary, review_words=frozenset(), ignored=frozenset(
     return None, False
 
 
-class Change:
-    __slots__ = ("offset", "line", "column", "old", "new", "review")
+SENTENCE_END_RE = re.compile(r"""[.!?]["')\]]*\s""")
+CONTEXT_LIMIT = 160
 
-    def __init__(self, offset, line, column, old, new, review=False):
+# A period after one of these is an abbreviation, not the end of a sentence.
+# Without this, a context spanning "St. Francois County" or "e.g. this value"
+# truncates at exactly the point that made it worth reading.
+ABBREVIATIONS = frozenset("""
+    mr mrs ms dr prof st ave rd sr jr vs etc eg ie no nos fig figs approx
+    al inc ltd co corp dept est min max cf pp vol ch sec ref cal
+""".split())
+
+
+def _is_sentence_end(text, match):
+    """False when the period belongs to an abbreviation or an initial."""
+    if text[match.start()] != ".":
+        return True                      # ! and ? are unambiguous
+    end = match.start()
+    start = end
+    while start > 0 and text[start - 1].isalpha():
+        start -= 1
+    token = text[start:end]
+    if not token:
+        return True
+    return not (len(token) == 1 or token.lower() in ABBREVIATIONS)
+
+
+def sentence_at(text, offset, limit=CONTEXT_LIMIT):
+    """The sentence containing `offset`, whitespace collapsed.
+
+    Hard-wrapped prose puts a sentence across several lines, so this cannot be
+    line-based. Bounded by `limit` in each direction so a file with no sentence
+    punctuation cannot return the whole document.
+    """
+    low = max(0, offset - limit)
+    high = min(len(text), offset + limit)
+    start, end = low, high
+
+    # A blank line is a hard boundary in both directions.
+    para = text.rfind("\n\n", low, offset)
+    if para != -1:
+        start = para + 2
+    para = text.find("\n\n", offset, high)
+    if para != -1:
+        end = para
+
+    # Nearest sentence end before the word, and the first one after it.
+    for match in SENTENCE_END_RE.finditer(text, start, offset):
+        if _is_sentence_end(text, match):
+            start = match.end()
+    for match in SENTENCE_END_RE.finditer(text, offset, end):
+        if _is_sentence_end(text, match):
+            end = match.end()
+            break
+
+    # If a bound came from the character limit rather than a real boundary,
+    # step to a word edge so the context does not end mid-word.
+    if start == low and low > 0:
+        space = text.find(" ", start, offset)
+        if space != -1:
+            start = space + 1
+    if end == high and high < len(text):
+        space = text.rfind(" ", offset, end)
+        if space != -1:
+            end = space
+
+    return " ".join(text[start:end].split())
+
+
+class Change:
+    __slots__ = ("offset", "line", "column", "old", "new", "review", "context")
+
+    def __init__(self, offset, line, column, old, new, review=False, context=None):
         self.offset = offset
         self.line = line
         self.column = column
         self.old = old
         self.new = new
         self.review = review
+        self.context = context
 
     def as_dict(self):
-        return {
+        record = {
             "line": self.line,
             "column": self.column,
             "from": self.old,
             "to": self.new,
             "review": self.review,
         }
+        if self.context is not None:
+            record["context"] = self.context
+        return record
 
 
 def _line_index(text):
@@ -680,8 +752,13 @@ def _locate(line_starts, offset):
 
 
 def find_changes(text, spans, vocabulary, review_words=frozenset(),
-                 ignored=frozenset()):
-    """Locate every replaceable word inside `spans`."""
+                 ignored=frozenset(), context_for_all=False):
+    """Locate every replaceable word inside `spans`.
+
+    A review hit always carries the sentence it sits in, so the caller can
+    adjudicate it without reopening the file. `context_for_all` extends that to
+    every hit, which also helps when screening for proper nouns.
+    """
     line_starts = _line_index(text)
     changes = []
     for start, end in spans:
@@ -702,10 +779,14 @@ def find_changes(text, spans, vocabulary, review_words=frozenset(),
             if before == "_" or after == "_" or before.isdigit() or after.isdigit():
                 continue
             line, column = _locate(line_starts, match.start())
+            context = None
+            if needs_review or context_for_all:
+                context = sentence_at(text, match.start())
             changes.append(Change(
                 match.start(), line, column, word,
                 match_case(word, replacement),
                 review=needs_review,
+                context=context,
             ))
     return changes
 
@@ -804,6 +885,8 @@ def render_text_report(results, write_mode, errors):
                 lines.append(
                     f"  {change.line}:{change.column}  {change.old} -> {change.new}"
                 )
+            if change.context:
+                lines.append(f"        {change.context}")
         lines.append("")
     if errors:
         lines.append("Errors:")
@@ -823,12 +906,18 @@ def render_text_report(results, write_mode, errors):
         lines.append("No British spellings found.")
 
     if pending:
-        noun = "hit needs" if pending == 1 else "hits need"
-        lines.append(
-            f"{pending} ambiguous {noun} review and were not applied. "
-            f"Read the sentence: the British and American forms are both valid "
-            f"words here."
-        )
+        if pending == 1:
+            lines.append(
+                "1 ambiguous hit needs review and was not applied. "
+                "Read the sentence: the British and American forms are both "
+                "valid words here."
+            )
+        else:
+            lines.append(
+                f"{pending} ambiguous hits need review and were not applied. "
+                f"Read the sentence: the British and American forms are both "
+                f"valid words here."
+            )
     return "\n".join(lines)
 
 
@@ -852,6 +941,10 @@ def build_parser():
         help="dialect to convert to (default: us)",
     )
     parser.add_argument("--json", action="store_true", help="emit JSON instead of text")
+    parser.add_argument(
+        "--context", action="store_true",
+        help="show the surrounding sentence for every hit (review hits always show it)",
+    )
     parser.add_argument(
         "--exclude", action="append", default=[], metavar="WORD",
         help="never translate this word (repeatable)",
@@ -905,7 +998,9 @@ def main(argv=None):
             spans = spans_for(path, text)
             if spans is None:
                 continue
-            changes = find_changes(text, spans, lookup, review_words, ignored)
+            changes = find_changes(
+                text, spans, lookup, review_words, ignored, args.context
+            )
         except Exception as exc:  # one bad file must not sink the run
             errors.append((path, f"{type(exc).__name__}: {exc}"))
             continue

@@ -1,6 +1,6 @@
 {
   "name": "speak-american",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Deterministically convert British English spellings to American English in Markdown, prose, and code comments, without touching code, links, or capitalization.",
   "author": {
     "name": "Mike Green"

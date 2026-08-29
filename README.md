@@ -58,6 +58,18 @@ python3 skills/speak-american/scripts/speak_american.py docs/ --json
 
 Exit codes: `0` clean, `1` British spellings found (dry run), `2` error.
 
+Ambiguous hits are reported but never applied, and each one carries the sentence
+it sits in — reassembled across line wraps, so hard-wrapped prose still yields a
+whole sentence. That is enough to decide from without opening the file:
+
+```
+  127:12  analyses -> analyzes   [review - ambiguous, not applied]
+          those collide when two analyses run at once
+```
+
+`--json` puts the same text in a `context` field. `--context` extends it to
+every hit, which helps when screening for proper nouns.
+
 ## What makes it safe to run
 
 It is structure-aware. In Markdown it translates prose and skips fenced code,

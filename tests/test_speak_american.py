@@ -755,6 +755,99 @@ class TestPrefixResolution(unittest.TestCase):
                          "The mislabelled_file var.\n")
 
 
+class TestSentenceContext(unittest.TestCase):
+    """Review hits carry the sentence, so a caller need not reopen the file."""
+
+    REVIEW = sa.load_review_vocabulary("us")
+
+    def _changes(self, text, ext=".md", context_for_all=False):
+        lookup = dict(VOCAB)
+        lookup.update(self.REVIEW)
+        spans = sa.spans_for(Path("f" + ext), text)
+        return sa.find_changes(text, spans, lookup, frozenset(self.REVIEW),
+                               frozenset(), context_for_all)
+
+    def test_review_hit_carries_context_by_default(self):
+        text = "Those collide when two analyses run at once.\n"
+        change = self._changes(text)[0]
+        self.assertEqual(change.context,
+                         "Those collide when two analyses run at once.")
+
+    def test_ordinary_hit_has_no_context_by_default(self):
+        text = "The colour is grey.\n"
+        for change in self._changes(text):
+            self.assertIsNone(change.context)
+
+    def test_context_for_all_adds_it_to_ordinary_hits(self):
+        text = "The colour is grey.\n"
+        for change in self._changes(text, context_for_all=True):
+            self.assertEqual(change.context, "The colour is grey.")
+
+    def test_sentence_is_reassembled_across_a_hard_wrap(self):
+        """The point of not being line-based: 80-column prose."""
+        text = ("Arial has no glyphs for the symbols\n"
+                "these analyses use. Those collide\n"
+                "when two analyses run at once.\n")
+        contexts = [c.context for c in self._changes(text)]
+        self.assertEqual(
+            contexts[0],
+            "Arial has no glyphs for the symbols these analyses use.")
+        self.assertEqual(
+            contexts[1], "Those collide when two analyses run at once.")
+
+    def test_the_two_readings_are_distinguishable_from_context_alone(self):
+        """The whole purpose: adjudicate without opening the file."""
+        noun = "The symbols these analyses use are wrong.\n"
+        verb = "The script analyses the parcel boundary.\n"
+        self.assertIn("these analyses use", self._changes(noun)[0].context)
+        self.assertIn("script analyses the", self._changes(verb)[0].context)
+
+    def test_abbreviation_is_not_a_sentence_boundary(self):
+        text = "Data from St. Francois County shows the colour is grey."
+        self.assertEqual(sa.sentence_at(text, text.index("colour")), text)
+
+    def test_initials_are_not_a_sentence_boundary(self):
+        text = "Use e.g. the colour value here. Next sentence."
+        self.assertEqual(sa.sentence_at(text, text.index("colour")),
+                         "Use e.g. the colour value here.")
+
+    def test_a_real_sentence_boundary_is_respected(self):
+        text = "It ends here. The colour is grey. And more."
+        self.assertEqual(sa.sentence_at(text, text.index("colour")),
+                         "The colour is grey.")
+
+    def test_blank_line_bounds_the_context(self):
+        text = "Earlier paragraph.\n\nThe colour is grey\n\nLater paragraph."
+        self.assertEqual(sa.sentence_at(text, text.index("colour")),
+                         "The colour is grey")
+
+    def test_context_is_bounded_without_punctuation(self):
+        text = "x " * 300 + "colour " + "y " * 300
+        got = sa.sentence_at(text, text.index("colour"))
+        self.assertLessEqual(len(got), 2 * sa.CONTEXT_LIMIT + 1)
+        self.assertIn("colour", got)
+
+    def test_context_at_the_very_start_of_a_file(self):
+        self.assertEqual(sa.sentence_at("colour is grey.", 0), "colour is grey.")
+
+    def test_json_carries_context_only_when_present(self):
+        review = [c for c in self._changes("These analyses run.\n")][0]
+        plain = [c for c in self._changes("A colour.\n")][0]
+        self.assertIn("context", review.as_dict())
+        self.assertNotIn("context", plain.as_dict())
+
+    def test_singular_summary_line_is_grammatical(self):
+        change = self._changes("These analyses run.\n")
+        report = sa.render_text_report([(Path("f.md"), change)], False, [])
+        self.assertIn("1 ambiguous hit needs review and was not applied", report)
+
+    def test_plural_summary_line_is_grammatical(self):
+        text = "These analyses run. Those analyses too.\n"
+        report = sa.render_text_report([(Path("f.md"), self._changes(text))],
+                                       False, [])
+        self.assertIn("2 ambiguous hits need review and were not applied", report)
+
+
 class TestSpanArithmetic(unittest.TestCase):
     def test_merge_overlapping(self):
         self.assertEqual(sa.merge_spans([(0, 5), (3, 8), (10, 12)]), [(0, 8), (10, 12)])
