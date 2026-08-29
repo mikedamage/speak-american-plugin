@@ -486,9 +486,12 @@ class TestWordListIntegrity(unittest.TestCase):
     def test_double_l_entries_respect_the_stress_rule(self):
         """American doubles the l only when the final syllable is stressed.
 
-        So the list may de-double LAbelled but must never touch conTROLLED,
+        So the list may de-double LA-belled but must never touch con-TROLLED,
         which is correct in both dialects. This is the distinction no suffix
         rule can make, and the reason the list is curated by hand.
+
+        The stress marks are hyphenated so this docstring does not trip the
+        very rule it documents.
         """
         for word in ["controlled", "controlling", "uncontrolled", "installed",
                      "compelled", "expelled", "rebelled", "patrolled",
