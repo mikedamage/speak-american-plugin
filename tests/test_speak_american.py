@@ -265,7 +265,7 @@ class TestWordListIntegrity(unittest.TestCase):
     def rows(self):
         import csv
         out = []
-        for name in ("words.tsv", "words-extra.tsv"):
+        for name in ("words.tsv", "words-extra.tsv", "words-review.tsv"):
             path = self.DATA / name
             with path.open(encoding="utf8") as handle:
                 for number, line in enumerate(handle, 1):
@@ -335,6 +335,8 @@ class TestWordListIntegrity(unittest.TestCase):
             "lit", "vice", "dealt", "knelt", "globally", "simultaneous",
             "cancellation", "curricula", "antennae", "bingeing", "unfeasible",
             "sanatorium", "jewelry", "color", "center", "gray",
+            # Standard American English; Merriam-Webster's main entries.
+            "aesthetic", "aesthetics", "aesthetically", "aesthete",
         ]:
             self.assertNotIn(word, VOCAB, f"{word!r} is correct American English")
 
@@ -358,6 +360,68 @@ class TestWordListIntegrity(unittest.TestCase):
 
     def test_usable_is_left_alone_end_to_end(self):
         text = "A usable feature after vectorization.\n"
+        self.assertEqual(translate(text), text)
+
+
+class TestReviewTier(unittest.TestCase):
+    """Ambiguous pairs are reported but never auto-applied."""
+
+    REVIEW = sa.load_review_vocabulary("us")
+
+    def test_analyses_is_in_the_review_tier_not_the_main_list(self):
+        self.assertNotIn("analyses", VOCAB)
+        self.assertEqual(self.REVIEW.get("analyses"), "analyzes")
+
+    def test_unambiguous_siblings_stay_auto_applied(self):
+        """The -yse verb forms are always British; only the plural noun is not."""
+        self.assertEqual(VOCAB.get("analyse"), "analyze")
+        self.assertEqual(VOCAB.get("analysed"), "analyzed")
+        self.assertEqual(VOCAB.get("analysing"), "analyzing")
+
+    def _run(self, text, *args):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "f.md"
+            path.write_text(text, encoding="utf-8")
+            code = sa.main([str(path), "--no-gitignore", *args])
+            return code, path.read_text(encoding="utf-8")
+
+    def test_write_does_not_apply_a_review_hit(self):
+        text = "The symbols these analyses use.\n"
+        code, after = self._run(text, "--write")
+        self.assertEqual(after, text, "review hit must not be rewritten")
+        self.assertEqual(code, sa.EXIT_FOUND, "pending review should exit 1")
+
+    def test_write_still_applies_normal_hits_on_the_same_line(self):
+        text = "These analyses use a grey colour.\n"
+        code, after = self._run(text, "--write")
+        self.assertEqual(after, "These analyses use a gray color.\n")
+        self.assertEqual(code, sa.EXIT_FOUND)
+
+    def test_write_exits_clean_when_nothing_pending(self):
+        code, after = self._run("A grey colour.\n", "--write")
+        self.assertEqual(after, "A gray color.\n")
+        self.assertEqual(code, sa.EXIT_CLEAN)
+
+    def test_review_flag_appears_in_change_records(self):
+        text = "These analyses use a grey colour.\n"
+        spans = sa.spans_for(Path("f.md"), text)
+        lookup = dict(VOCAB)
+        lookup.update(self.REVIEW)
+        changes = sa.find_changes(text, spans, lookup, frozenset(self.REVIEW))
+        by_word = {c.old: c.review for c in changes}
+        self.assertTrue(by_word["analyses"])
+        self.assertFalse(by_word["grey"])
+        self.assertFalse(by_word["colour"])
+
+    def test_aesthetic_is_left_alone(self):
+        for text in ["The aesthetic of it.\n", "Its aesthetics matter.\n",
+                     "Aesthetically pleasing.\n"]:
+            self.assertEqual(translate(text), text)
+
+    def test_reusable_and_unusable_are_not_matched(self):
+        """The word regex matches maximal letter runs, so an embedded word
+        is never seen as a separate token."""
+        text = "A reusable analysis helper; cover triage - unusable.\n"
         self.assertEqual(translate(text), text)
 
 

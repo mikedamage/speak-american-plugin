@@ -84,6 +84,11 @@ skipped; it does not abort the run or leave a half-written tree.
 - `skills/speak-american/data/words-ignore.list` — words to never translate, one
   per line. Use it for proper nouns (`Labour Party`, `Ministry of Defence`) and
   third-party API fields that legitimately use British spelling.
+- `skills/speak-american/data/words-review.tsv` — ambiguous pairs that are
+  reported but **never applied** by `--write`. A word belongs here when the
+  British form is also correct American English under another reading, so no
+  lexical rule can decide it. `analyses` is the plural of `analysis` in both
+  dialects *and* the British verb; only the verb is wrong.
 - `skills/speak-american/data/words-vocabulary.tsv` — vocabulary and register
   swaps (`petrol` → `gasoline`), **not loaded by default**. This tool fixes
   spelling; changing the words an author chose is a different job. Append these
@@ -98,6 +103,15 @@ rewritten already-correct American English (`buses` → `busses`, `lit` →
 
 Both are plain text with `#` comments and no rebuild step. Leave
 `data/words.tsv` alone so it can be re-imported from upstream.
+
+## Publishing a change
+
+Bump `version` in `.claude-plugin/plugin.json` for every published change.
+Claude Code caches an installed plugin in a version-pinned directory
+(`~/.claude/plugins/cache/speak-american/speak-american/<version>/`), so
+`/plugin marketplace update` followed by `/reload-plugins` will happily re-read
+the old directory and serve the previous word list. A new version number forces
+a new directory.
 
 ## Tests
 

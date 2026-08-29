@@ -43,11 +43,13 @@ recursively; files ignored by git, hidden files, and vendor directories
 
 | Code | Meaning |
 |------|---------|
-| `0`  | Clean — nothing to change, or `--write` succeeded |
-| `1`  | British spellings found (dry run only) |
+| `0`  | Clean — nothing to change, or `--write` applied everything |
+| `1`  | British spellings found, or ambiguous hits are awaiting review |
 | `2`  | An error occurred; see stderr |
 
 Exit `1` on a dry run is the normal "found something" signal, not a failure.
+Exit `1` *after* `--write` means some hits were flagged for review and
+deliberately left alone — read them yourself.
 
 ### Options
 
@@ -70,6 +72,8 @@ Exit `1` on a dry run is the normal "found something" signal, not a failure.
 4. If a hit is a proper noun or an external identifier (`Labour Party`, a
    third-party API field named `behaviour`, a quoted book title), do **not**
    apply it. Add it to `data/words-ignore.list` or pass `--exclude`, then re-run.
+5. Hits marked `[review - ambiguous, not applied]` are never applied by
+   `--write`. Read the sentence and edit by hand if the change is right.
 
 Prefer running the check on specific files over the whole repository. A
 repo-wide `--write` can touch files unrelated to the current task.
@@ -102,6 +106,26 @@ Across every file type it also leaves alone:
 - Words welded into identifiers: `colour_name`, `myColour`, `colour2`.
 - Capitalization: `COLOUR` becomes `COLOR`, `Colour` becomes `Color`.
 
+## Ambiguous words
+
+Some words are correct American English under one reading and British under
+another, so no word list can decide them. These live in `data/words-review.tsv`:
+the tool reports them and never applies them.
+
+`analyses` is the only one so far. It is the plural of `analysis` in **both**
+dialects, and separately the British third-person verb. Only the verb is wrong:
+
+- "the symbols these analyses use" — plural noun, **correct**, leave it.
+- "two analyses run at once" — plural noun, **correct**, leave it.
+- "the script analyses the parcel" — third-person verb, **wrong**, should be
+  `analyzes`.
+
+The tell is grammatical: a determiner (`these`, `two`, `the`) followed by an
+uninflected verb forces the noun reading. The sibling forms `analyse`,
+`analysed` and `analysing` are unambiguously British and are applied normally.
+
+When you see a review hit, read the sentence and decide. Do not apply it blindly.
+
 ## Known limits
 
 - An indented code block *inside a list item* is treated as prose, because
@@ -117,6 +141,8 @@ Across every file type it also leaves alone:
 - `data/words-extra.tsv` — additional `british<TAB>american` pairs. Overrides
   `words.tsv` on key collisions.
 - `data/words-ignore.list` — words to never translate, one per line.
+- `data/words-review.tsv` — ambiguous pairs: reported, never auto-applied.
+- `data/words-vocabulary.tsv` — register swaps. Not loaded.
 
 Both are plain TSV/text with `#` comments. Edit them directly; no rebuild step.
 Keep `data/words.tsv` untouched so it can be re-imported from upstream.

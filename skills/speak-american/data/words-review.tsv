@@ -1,0 +1,15 @@
+# Ambiguous pairs: REPORTED but never applied by --write.
+#
+# A word belongs here when the British form is also correct American
+# English under another reading, so no lexical rule can decide it. The
+# tool surfaces the hit and a human reads the sentence.
+#
+# analyses: the plural of 'analysis' in BOTH dialects, and separately
+# the British third-person verb. Only the verb is wrong in American
+# English. 'these analyses use' is a noun and correct; 'the script
+# analyses the parcel' is a verb and wrong. The sibling forms analyse,
+# analysed and analysing are unambiguous and stay in words.tsv.
+#
+# To auto-apply one of these anyway, move it to words-extra.tsv.
+#
+analyses	analyzes

@@ -64,11 +64,7 @@ def _read_ignores(path):
     return words
 
 
-def load_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
-    """Return {source_word: replacement} for the requested target dialect."""
-    pairs = _read_pairs(data_dir / "words.tsv")
-    pairs.update(_read_pairs(data_dir / "words-extra.tsv"))
-
+def _finalize(pairs, target, data_dir, extra_ignores):
     ignores = _read_ignores(data_dir / "words-ignore.list")
     ignores.update(word.lower() for word in extra_ignores)
 
@@ -81,6 +77,26 @@ def load_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
         pairs = flipped
 
     return {k: v for k, v in pairs.items() if k not in ignores}
+
+
+def load_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
+    """Return {source_word: replacement} for the requested target dialect."""
+    pairs = _read_pairs(data_dir / "words.tsv")
+    pairs.update(_read_pairs(data_dir / "words-extra.tsv"))
+    return _finalize(pairs, target, data_dir, extra_ignores)
+
+
+def load_review_vocabulary(target="us", data_dir=DATA_DIR, extra_ignores=()):
+    """Ambiguous pairs: reported, but never applied by --write.
+
+    A word belongs here when the British form is also correct American English
+    under another reading, so no lexical rule can decide it. `analyses` is the
+    plural of `analysis` in both dialects and separately the British verb; only
+    the verb is wrong in American English, and telling them apart is a
+    grammatical judgment this tool deliberately does not make.
+    """
+    pairs = _read_pairs(data_dir / "words-review.tsv")
+    return _finalize(pairs, target, data_dir, extra_ignores)
 
 
 # ---------------------------------------------------------------------------
@@ -512,14 +528,15 @@ WORD_RE = re.compile(r"[A-Za-z]+")
 
 
 class Change:
-    __slots__ = ("offset", "line", "column", "old", "new")
+    __slots__ = ("offset", "line", "column", "old", "new", "review")
 
-    def __init__(self, offset, line, column, old, new):
+    def __init__(self, offset, line, column, old, new, review=False):
         self.offset = offset
         self.line = line
         self.column = column
         self.old = old
         self.new = new
+        self.review = review
 
     def as_dict(self):
         return {
@@ -527,6 +544,7 @@ class Change:
             "column": self.column,
             "from": self.old,
             "to": self.new,
+            "review": self.review,
         }
 
 
@@ -548,7 +566,7 @@ def _locate(line_starts, offset):
     return low + 1, offset - line_starts[low] + 1
 
 
-def find_changes(text, spans, vocabulary):
+def find_changes(text, spans, vocabulary, review_words=frozenset()):
     """Locate every replaceable word inside `spans`."""
     line_starts = _line_index(text)
     changes = []
@@ -568,7 +586,11 @@ def find_changes(text, spans, vocabulary):
             if before == "_" or after == "_" or before.isdigit() or after.isdigit():
                 continue
             line, column = _locate(line_starts, match.start())
-            changes.append(Change(match.start(), line, column, word, match_case(word, replacement)))
+            changes.append(Change(
+                match.start(), line, column, word,
+                match_case(word, replacement),
+                review=word.lower() in review_words,
+            ))
     return changes
 
 
@@ -649,22 +671,31 @@ def collect(roots, use_gitignore=True, follow_hidden=False):
 def render_text_report(results, write_mode, errors):
     lines = []
     total = 0
+    pending = 0
     for path, changes in results:
         if not changes:
             continue
-        total += len(changes)
         lines.append(f"{path}")
         for change in changes:
-            lines.append(
-                f"  {change.line}:{change.column}  {change.old} -> {change.new}"
-            )
+            if change.review:
+                pending += 1
+                lines.append(
+                    f"  {change.line}:{change.column}  {change.old} -> {change.new}"
+                    f"   [review - ambiguous, not applied]"
+                )
+            else:
+                total += 1
+                lines.append(
+                    f"  {change.line}:{change.column}  {change.old} -> {change.new}"
+                )
         lines.append("")
     if errors:
         lines.append("Errors:")
         for path, message in errors:
             lines.append(f"  {path}: {message}")
         lines.append("")
-    files = sum(1 for _, c in results if c)
+
+    files = sum(1 for _, c in results if any(not x.review for x in c))
     if total:
         verb = "Fixed" if write_mode else "Found"
         noun = "replacement" if total == 1 else "replacements"
@@ -672,8 +703,16 @@ def render_text_report(results, write_mode, errors):
         lines.append(f"{verb} {total} {noun} in {files} {where}.")
         if not write_mode:
             lines.append("Re-run with --write to apply.")
-    else:
+    elif not pending:
         lines.append("No British spellings found.")
+
+    if pending:
+        noun = "hit needs" if pending == 1 else "hits need"
+        lines.append(
+            f"{pending} ambiguous {noun} review and were not applied. "
+            f"Read the sentence: the British and American forms are both valid "
+            f"words here."
+        )
     return "\n".join(lines)
 
 
@@ -718,12 +757,18 @@ def main(argv=None):
 
     try:
         vocabulary = load_vocabulary(args.target, extra_ignores=args.exclude)
+        review = load_review_vocabulary(args.target, extra_ignores=args.exclude)
     except OSError as exc:
         print(f"error: cannot load word list: {exc}", file=sys.stderr)
         return EXIT_ERROR
     if not vocabulary:
         print("error: word list is empty", file=sys.stderr)
         return EXIT_ERROR
+
+    # Review pairs are matched too, but flagged rather than applied.
+    review_words = frozenset(review)
+    lookup = dict(vocabulary)
+    lookup.update(review)
 
     try:
         paths = collect(args.paths, not args.no_gitignore, args.hidden)
@@ -743,14 +788,15 @@ def main(argv=None):
             spans = spans_for(path, text)
             if spans is None:
                 continue
-            changes = find_changes(text, spans, vocabulary)
+            changes = find_changes(text, spans, lookup, review_words)
         except Exception as exc:  # one bad file must not sink the run
             errors.append((path, f"{type(exc).__name__}: {exc}"))
             continue
 
-        if changes and args.write:
+        applicable = [c for c in changes if not c.review]
+        if applicable and args.write:
             try:
-                updated = apply_changes(text, changes)
+                updated = apply_changes(text, applicable)
                 _atomic_write(path, updated, args.encoding)
             except OSError as exc:
                 errors.append((path, str(exc)))
@@ -775,7 +821,11 @@ def main(argv=None):
 
     if errors:
         return EXIT_ERROR
-    if any(ch for _, ch in results) and not args.write:
+    pending = any(c.review for _, ch in results for c in ch)
+    if args.write:
+        # Ambiguous hits were deliberately not applied; say so with exit 1.
+        return EXIT_FOUND if pending else EXIT_CLEAN
+    if any(ch for _, ch in results):
         return EXIT_FOUND
     return EXIT_CLEAN
 
