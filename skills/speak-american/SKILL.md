@@ -81,15 +81,24 @@ repo-wide `--write` can touch files unrelated to the current task.
 ### Why the dry run matters more in a docs repo
 
 In a source tree a bad rewrite usually breaks the build. In a documentation
-corpus nothing catches it. Inline code in docs is often a verbatim external
-string — an API field name, a vendor's data value, a controlled vocabulary term
-misspelled upstream and documented that way on purpose. Rewriting one of those
-does not read as a typo: it silently desynchronizes the document from the live
-data, and the next person greps for a string that no longer exists.
+corpus nothing catches it.
+
+Inline code in documentation is frequently a verbatim string the project does
+not control — an API field value, a status string, an upstream misspelling
+recorded deliberately — and such a document is correct precisely insofar as it
+matches that external source. Rewriting the string therefore does not improve
+the document, it makes it wrong, and wrong in the way hardest to catch: the
+corrected spelling reads better than the original, while the next person to grep
+for the real value finds nothing.
+
+The sharpest case is a real one. `Butyl Benzyl Phthlate` is misspelled in the
+EPA's own published data. A document that records the misspelling on purpose, so
+the value can be matched, is made wrong by correcting it — and this is exactly
+where a spell checker is most confident, because the misspelling is real.
 
 That is why protection failures matter more than missed words here. A missed
-British spelling is cosmetic. A rewritten API string is a wrong document that
-looks right.
+British spelling is cosmetic. A rewritten external string is a wrong document
+that looks right.
 
 ## What it will and will not touch
 

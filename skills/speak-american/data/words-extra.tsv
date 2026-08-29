@@ -34,6 +34,12 @@
 # The one rule that is safe is the prefix resolution in the script, and only
 # because it composes a KNOWN-good pair with a prefix: the etymology question
 # is already settled by a human having put the stem on the list.
+#
+# SCOPE OF THOSE NUMBERS: one author, one technical domain, and the -ise
+# population there is dominated by real-estate and GIS vocabulary. The shape of
+# the result should generalize -- these suffixes carry little signal anywhere --
+# but the counts should not be inherited. Anyone working a medical, legal or
+# literary corpus should re-measure rather than quote these figures.
 # ---------------------------------------------------------------------------
 
 # -ise/-isation gaps in the upstream list

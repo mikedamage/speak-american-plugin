@@ -336,6 +336,13 @@ def markdown_translatable_spans(text):
     # Inline code is scanned document-wide so a span may wrap across lines.
     # Blank out the block-level protected regions first (preserving offsets and
     # newlines) so backticks inside fenced code cannot pair with prose.
+    #
+    # This step was distrusted when written and then probed: eight adversarial
+    # fence/span interactions in TestMarkdownStructure, including a fence body
+    # with an odd backtick count, a fence on the line directly after an
+    # unclosed run, and two wrapped spans separated by a fence. All hold. The
+    # masking is load-bearing rather than incidental -- do not simplify it away
+    # without re-running those tests.
     masked = list(text)
     for start, end in merge_spans(protected):
         for index in range(start, min(end, len(masked))):
