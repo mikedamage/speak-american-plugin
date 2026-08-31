@@ -4,14 +4,11 @@ Lately I've noticed Claude's prose composition lapsing into UK/Commonwealth spel
 
 ---
 
-This Claude Code plugin converts British/Commonwealth English spellings to
-American English in Markdown, prose, and code comments — deterministically, from
-a static word-pair list.
-
-It exists because Claude Code sessions randomly decide that they want to seem more
-smart and sophisticated sometimes: a doc comes back with `centre` for `center`, `colour` for `color`,
-`capitalisation` for `capitalization`. Catching that by re-reading the document
-costs tokens and misses things. This catches it with a list lookup.
+So this Claude Code plugin does the reminding for me. It converts
+British/Commonwealth spellings to American English in Markdown, prose, and code
+comments — deterministically, from a static word-pair list. No model in the
+loop, no judgment calls, no re-reading a doc and hoping you spot every `colour`.
+Just a lookup table doing its patriotic duty.
 
 ## Install
 
