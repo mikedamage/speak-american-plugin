@@ -2,8 +2,6 @@
 
 Lately I've noticed Claude's prose composition lapsing into UK/Commonwealth spelling conventions. I got tired of reminding it that this is the land of the free and to drop all the extraneous u's, that it's "center" not "cent-reeeee," and to use z's because that's literally the sound at the end of "analyze." It's costing me too much in tokens, Busch Lights, and Marlboro Reds.
 
----
-
 So this Claude Code plugin does the reminding for me. It converts
 British/Commonwealth spellings to American English in Markdown, prose, and code
 comments — deterministically, from a static word-pair list. No model in the
